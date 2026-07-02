@@ -44,7 +44,7 @@ stdenv.mkDerivation rec {
   src = fetchFromGitHub {
     owner = "monkeytypegame";
     repo = "monkeytype";
-    rev = "master";
+    rev = "7ia9ww8i8d2mh62b6rsym3nbs9fzpyq9";
     hash = "sha256-a9nvQGs+CvPaU1mXADUkbdNRI1c0y2BEcn/4HpakEEQ=";
   };
 
