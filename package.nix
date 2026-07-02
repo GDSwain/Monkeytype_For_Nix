@@ -30,6 +30,9 @@
   # Helper that fetches and vendors pnpm dependencies
   # before the sandboxed build begins.
   fetchPnpmDeps,
+  python3,
+  xdg-utils,
+  makeWrapper,
 }:
 
 stdenv.mkDerivation rec {
@@ -44,7 +47,7 @@ stdenv.mkDerivation rec {
   src = fetchFromGitHub {
     owner = "monkeytypegame";
     repo = "monkeytype";
-    rev = "7ia9ww8i8d2mh62b6rsym3nbs9fzpyq9";
+    rev = "4b92621a5ce4488a0efcef5f6676b90afd6e648e";
     hash = "sha256-a9nvQGs+CvPaU1mXADUkbdNRI1c0y2BEcn/4HpakEEQ=";
   };
 
@@ -69,7 +72,16 @@ stdenv.mkDerivation rec {
     nodejs
     pnpm_10
     pnpmConfigHook
+    python3
+    xdg-utils
+    makeWrapper
   ];
+
+  # Tools needed at runtime.
+  buildInputs = [
+  python3
+  xdg-utils
+];
 
   # Monkeytype's production Vite config requires this variable.
   # For this local/static build, a dummy value is enough to complete the build.
@@ -98,9 +110,15 @@ stdenv.mkDerivation rec {
   # Install the generated frontend static site.
   installPhase = ''
     runHook preInstall
+
     mkdir -p $out/share/monkeytype
     cp -r frontend/dist/* $out/share/monkeytype/
-    runHook postInstall
+
+    mkdir -p $out/bin
+    makeWrapper ${python3}/bin/python3 $out/bin/monkeytype \
+      --add-flags "-m http.server 8765 --bind 127.0.0.1 --directory $out/share/monkeytype"
+
+  runHook postInstall
   '';
 
   doInstallCheck = true;
