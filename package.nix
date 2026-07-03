@@ -31,8 +31,6 @@
   # before the sandboxed build begins.
   fetchPnpmDeps,
   python3,
-  xdg-utils,
-  makeWrapper,
 }:
 
 stdenv.mkDerivation rec {
@@ -41,6 +39,8 @@ stdenv.mkDerivation rec {
   # This is not a released version yet.
   # It identifies an unstable build from the upstream master branch.
   version = "unstable-2026-06-30";
+
+  launcher = ./monkeytype-launcher.py;
 
   # Fetch the upstream Monkeytype source.
   # TODO: replace `master` with a pinned commit or release tag.
@@ -73,14 +73,11 @@ stdenv.mkDerivation rec {
     pnpm_10
     pnpmConfigHook
     python3
-    xdg-utils
-    makeWrapper
   ];
 
   # Tools needed at runtime.
   buildInputs = [
     python3
-    xdg-utils
 ];
 
   # Monkeytype's production Vite config requires this variable.
@@ -114,25 +111,11 @@ stdenv.mkDerivation rec {
     mkdir -p $out/share/monkeytype
     cp -r frontend/dist/* $out/share/monkeytype/
 
-    mkdir -p $out/bin
+    install -Dm755 ${launcher} $out/bin/monkeytype
 
-    cat > $out/bin/monkeytype <<EOF
-#!/usr/bin/env bash
-
-url="http://127.0.0.1:8765"
-
-echo "Starting Monkeytype..."
-echo "Serving \$url"
-
-nohup ${xdg-utils}/bin/xdg-open "\$url" >/dev/null 2>&1 &
-
-exec ${python3}/bin/python3 \
-  -m http.server 8765 \
-  --bind 127.0.0.1 \
-  --directory "$out/share/monkeytype"
-EOF
-
-    chmod +x $out/bin/monkeytype
+    substituteInPlace $out/bin/monkeytype \
+      --replace-fail "@python@" "${python3}/bin/python3" \
+      --replace-fail "@site@" "$out/share/monkeytype"
 
     runHook postInstall
   '';
