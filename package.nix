@@ -79,8 +79,8 @@ stdenv.mkDerivation rec {
 
   # Tools needed at runtime.
   buildInputs = [
-  python3
-  xdg-utils
+    python3
+    xdg-utils
 ];
 
   # Monkeytype's production Vite config requires this variable.
@@ -115,10 +115,26 @@ stdenv.mkDerivation rec {
     cp -r frontend/dist/* $out/share/monkeytype/
 
     mkdir -p $out/bin
-    makeWrapper ${python3}/bin/python3 $out/bin/monkeytype \
-      --add-flags "-m http.server 8765 --bind 127.0.0.1 --directory $out/share/monkeytype"
 
-  runHook postInstall
+    cat > $out/bin/monkeytype <<EOF
+#!/usr/bin/env bash
+
+url="http://127.0.0.1:8765"
+
+echo "Starting Monkeytype..."
+echo "Serving \$url"
+
+nohup ${xdg-utils}/bin/xdg-open "\$url" >/dev/null 2>&1 &
+
+exec ${python3}/bin/python3 \
+  -m http.server 8765 \
+  --bind 127.0.0.1 \
+  --directory "$out/share/monkeytype"
+EOF
+
+    chmod +x $out/bin/monkeytype
+
+    runHook postInstall
   '';
 
   doInstallCheck = true;
