@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Monkeytype
+Comment=A minimalistic, customizable typing test
+Exec=monkeytype
+Icon=monkeytype
+Terminal=false
+Categories=Education;
