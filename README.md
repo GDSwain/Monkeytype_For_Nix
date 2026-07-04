@@ -49,26 +49,30 @@ The current focus is desktop integration:
 ## Building
 
 ```bash
-nix-build```
+nix-build
+
+```
 
 ### Running
 
 ```bash
-./result/bin/monkeytype```
+./result/bin/monkeytype
 
-Milestones
+```
+
+## Milestones
 
 Completed:
 
-Reproducible build from upstream source.
-Source pinned to a specific upstream commit.
-Documented derivation.
-Install verification.
-Dedicated Python launcher.
-Automatic browser launch.
-Friendly runtime diagnostics.
-Runnable monkeytype command.
-Why this repository?
+- Reproducible build from upstream source.
+- Source pinned to a specific upstream commit.
+- Documented derivation.
+- Install verification.
+- Dedicated Python launcher.
+- Automatic browser launch.
+- Friendly runtime diagnostics.
+- Runnable monkeytype command.
+- Why this repository?
 
 This project began as a learning exercise to understand how a modern
 TypeScript/pnpm application can be packaged reproducibly using Nix,
