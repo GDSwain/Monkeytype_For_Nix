@@ -49,7 +49,12 @@ The current focus is desktop integration:
 ## Building
 
 ```bash
-nix-build
+nix-build```
+
+### Running
+
+```bash
+./result/bin/monkeytype```
 
 Milestones
 
