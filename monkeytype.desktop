@@ -1,6 +1,7 @@
 [Desktop Entry]
 Type=Application
 Name=Monkeytype
+GenericName=Typing Tutor
 Comment=A minimalistic, customizable typing test
 Exec=monkeytype
 Icon=monkeytype
