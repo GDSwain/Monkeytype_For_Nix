@@ -41,6 +41,7 @@ stdenv.mkDerivation rec {
   version = "unstable-2026-06-30";
 
   launcher = ./monkeytype-launcher.py;
+  desktopFile = ./monkeytype.desktop;
 
   # Fetch the upstream Monkeytype source.
   # TODO: replace `master` with a pinned commit or release tag.
@@ -111,6 +112,16 @@ stdenv.mkDerivation rec {
     mkdir -p $out/share/monkeytype
     cp -r frontend/dist/* $out/share/monkeytype/
 
+    # Install the application icon into the freedesktop icon hierarchy.
+    install -Dm644 \
+      $out/share/monkeytype/images/icons/general_icon_x512.png \
+      $out/share/icons/hicolor/512x512/apps/monkeytype.png
+
+    # Install the desktop entry.
+
+    install -Dm644 ${desktopFile} $out/share/applications/monkeytype.desktop
+
+    # Install the launcher.
     install -Dm755 ${launcher} $out/bin/monkeytype
 
     substituteInPlace $out/bin/monkeytype \
