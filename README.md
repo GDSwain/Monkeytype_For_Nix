@@ -74,6 +74,10 @@ Completed:
 - Runnable monkeytype command.
 - Why this repository?
 
+After upgrading the package, an existing browser cache may retain assets from
+the previous frontend build. If styles fail to load, clear the site data for
+127.0.0.1:8765 and reload.
+
 This project began as a learning exercise to understand how a modern
 TypeScript/pnpm application can be packaged reproducibly using Nix,
 without relying on flakes or Home Manager.

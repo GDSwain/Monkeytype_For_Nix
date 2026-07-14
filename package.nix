@@ -38,18 +38,19 @@ stdenv.mkDerivation rec {
 
   # This is not a released version yet.
   # It identifies an unstable build from the upstream master branch.
-  version = "unstable-2026-06-30";
+  version = "26.28.0";
 
   launcher = ./monkeytype-launcher.py;
   desktopFile = ./monkeytype.desktop;
 
   # Fetch the upstream Monkeytype source.
-  # TODO: replace `master` with a pinned commit or release tag.
+  # Pin an upstream commit so the build remains reproducible.
+  # The frontend compatibility level must match the live Monkeytype backend.
   src = fetchFromGitHub {
     owner = "monkeytypegame";
     repo = "monkeytype";
-    rev = "4b92621a5ce4488a0efcef5f6676b90afd6e648e";
-    hash = "sha256-a9nvQGs+CvPaU1mXADUkbdNRI1c0y2BEcn/4HpakEEQ=";
+    rev = "fb25c30fa037fa06d083cb5e9a2def0bd8d5c0e8";
+    hash = "sha256-sy612kemCqgEpeKnOFAz1Jjv0tvT8HAbbsI04JGugg4=";
   };
 
   # Upstream currently fails a frozen pnpm install because the lockfile
@@ -65,7 +66,7 @@ stdenv.mkDerivation rec {
     inherit pname version src pnpmInstallFlags;
     pnpm = pnpm_10;
     fetcherVersion = 3;
-    hash = "sha256-PNZ42D89XE56q4tK5PwraZAqvomw7RKVN8wDak4Zxm0=";
+    hash = "sha256-is8Ytq8E+cn38AQUgER2SdfEz6s47yo05qTBNLbI1O0=";
   };
 
   # Tools needed at build time.
