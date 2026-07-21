@@ -1,0 +1,324 @@
+#+title: Project Monkeytype
+#+author: Oggie
+#+DESCRIPTION: This is my first attempt at creating and managing a Nix package
+#+STARTUP: showeverything
+#+OPTIONS: toc:2
+
+* Monkeytype Nix Packaging Notes
+  - [[#what-i-set-out-to-do][What I set out to do]]
+  - [[#what-i-built][What I built]]
+  - [[#what-problems-i-hit][What problems I hit]]
+  - [[#outcome][Outcome]]
+  - [[#what-this-means-to-me][What this means to me]]
+  - [[#current-limitations][Current limitations]]
+  - [[#why-this-may-still-matter][Why this may still matter]]
+- [[#possible-next-steps][Possible Next Steps]]
+  - [[#option-1-clean-up-the-current-package][Option 1: Clean up the current package]]
+  - [[#option-2-make-it-runnable-from-the-terminal][Option 2: Make it runnable from the terminal]]
+  - [[#option-3-add-a-desktop-launcher][Option 3: Add a desktop launcher]]
+  - [[#option-4-explore-a-desktop-wrapper][Option 4: Explore a desktop wrapper]]
+  - [[#option-5-investigate-upstream-assumptions][Option 5: Investigate upstream assumptions]]
+  - [[#option-6-treat-the-repo-as-a-learning-lab][Option 6: Treat the repo as a learning lab]]
+- [[#my-current-read][My Current Read]]
+
+
+** Current Project Status
+
+**Proof of Concept**
+
+- ✔ Builds reproducibly with Nix
+- ✔ Documents the packaging process
+- ✔ Produces the static Monkeytype application
+
+Not yet:
+
+- Desktop launcher
+- User-facing installation
+- Nixpkgs submission
+
+** What I set out to do
+
+I wanted to explore whether Monkeytype could be packaged for Nix without using flakes or Home Manager. My original goal was not necessarily to produce a polished package immediately, but to understand what would be involved in taking an upstream GitHub project and turning it into something Nix can build.
+
+I also wanted to see whether this could become a real contribution path: either as my own package, a learning repository, or eventually something suitable for Nixpkgs.
+
+** What I built
+
+I created a small Nix packaging project for Monkeytype.
+
+The project currently contains a plain =default.nix= and =package.nix= structure. The package fetches the Monkeytype source from GitHub, fetches pnpm dependencies using Nixpkgs tooling, builds the project, and installs the generated static web application into:
+
+#+begin_src text
+result/share/monkeytype
+#+end_src
+
+The resulting output contains the expected static web assets: =index.html=, JavaScript bundles, CSS, images, sounds, themes, language files, layouts, quotes, fonts, and service worker files. :contentReference[oaicite:0]{index=0}
+
+** What problems I hit
+
+*** Source hash
+
+The first expected failure was the fake source hash. Nix fetched the GitHub source and gave me the correct hash.
+
+*** Nix string syntax
+
+I initially forgot that the hash needed to be quoted as a string. Without quotes, Nix interpreted it incorrectly.
+
+*** Network access
+
+A raw =pnpm install= failed because Nix builds are sandboxed and cannot fetch from the network during the build.
+
+This led to using =fetchPnpmDeps= and =pnpmConfigHook=.
+
+*** pnpm lockfile issues
+
+The upstream lockfile/config did not work cleanly with frozen installation. For now, I used:
+
+#+begin_src nix
+pnpmInstallFlags = [ "--no-frozen-lockfile" ];
+#+end_src
+
+This is acceptable for exploration, but probably not ideal for a final Nixpkgs-quality package.
+
+The pnpm dependency derivation may show npm registry downloads.
+This happens while building the fixed-output pnpm dependency store,
+not during the final sandboxed application build.
+
+*** Missing production configuration
+
+The build expected production deployment values that are not present in the public source tree.
+
+I added a dummy:
+
+#+begin_src nix
+RECAPTCHA_SITE_KEY = "dummy";
+#+end_src
+
+I also copied the example Firebase config into the expected live config filename during the patch phase:
+
+#+begin_src nix
+postPatch = ''
+  cp frontend/src/ts/constants/firebase-config-example.ts \
+     frontend/src/ts/constants/firebase-config-live.ts
+'';
+#+end_src
+
+This allowed the frontend build to complete.
+
+** Outcome
+
+The package builds successfully.
+
+At this stage, I have not yet made it into a normal desktop application or terminal command. What I have is a successful Nix build of the Monkeytype static web app.
+
+This is still significant. I proved that I can take a modern TypeScript/pnpm project and get it through a Nix sandboxed build.
+
+** What this means to me
+
+This was not just about Monkeytype.
+
+I learned about:
+
+- =fetchFromGitHub=
+- fixed-output hashes
+- =callPackage=
+- =stdenv.mkDerivation=
+- Nix build phases
+- sandboxed builds
+- pnpm dependency fetching
+- upstream assumptions during production builds
+- installing build artifacts into =$out=
+
+I also learned that packaging is often a process of listening to build failures and solving them one at a time.
+
+** Current limitations
+
+The package currently produces static website files, not a polished application.
+
+It does not yet provide:
+
+- a =monkeytype= command
+- a desktop launcher
+- a local server wrapper
+- an Electron/Tauri/WebKit desktop wrapper
+- a proper offline/runtime story
+- Nixpkgs-quality cleanup
+
+It also still uses exploratory workarounds that need review.
+
+** Why this may still matter
+
+Some people will reasonably ask why this exists when Monkeytype is already available as a website.
+
+Possible answers:
+
+- learning Nix packaging
+- reproducible builds
+- offline or semi-offline use
+- self-hosting
+- desktop integration
+- privacy/control
+- eventual Nixpkgs contribution
+- understanding how modern web apps fit into Nix
+
+Even if this never becomes a widely used package, the learning value is real.
+
+
+* Possible Next Steps
+
+** Option 1: Clean up the current package
+
+This is the safest next step.
+
+
+1. [X] Commit the current working state.
+2. [X] Add a README explaining what works.
+3. [X] Add comments explaining the Firebase and reCAPTCHA workarounds.
+4. [X] Pin the source to a specific commit instead of =master=.
+5. [X] Add metadata: description, homepage, license, platforms.
+6. [X] Add a simple install check that verifies =index.html= exists.
+
+*** Why do this
+
+This turns the project from a successful experiment into a maintainable reference point.
+
+** Option 2: Make it runnable from the terminal
+
+Goal:
+
+#+begin_src bash
+monkeytype
+#+end_src
+
+*** Possible approach
+
+Add a wrapper script in =$out/bin/monkeytype=.
+
+The script could start a local static server and open a browser.
+
+*** Steps
+
+1. [X] Add python3, xdg-utils, and makeWrapper arguments.
+2. [X] Add makeWrapper to nativeBuildInputs.
+3. [X] Add python3 and xdg-utils as runtime inputs.
+4. [X] Install result/bin/monkeytype.
+5. [X] Confirm ./result/bin/monkeytype starts a local server.
+6. [X] Open http://127.0.0.1:8765 manually.
+7. [X] Later decide whether to auto-open the browser.
+
+*** Why do this
+
+This makes the package feel usable without yet solving full desktop-app wrapping.
+
+** Option 3: Add a desktop launcher
+
+Goal: Monkeytype appears in the application menu.
+
+*** Steps
+
+1. [ ] Add a =.desktop= file.
+2. [ ] Point it at the =monkeytype= wrapper command.
+3. [ ] Add an icon from the built assets.
+4. [ ] Install the desktop file under =$out/share/applications=.
+5. [ ] Install icons under the expected icon paths.
+6. [ ] Validate the desktop entry with desktop-file-validate.
+
+*** Why do this
+
+This gets closer to the original goal: install it, then launch it like a normal app.
+
+** Option 4: Explore a desktop wrapper
+
+Goal: Monkeytype opens in its own application window, not as a browser tab.
+
+Possible runtimes:
+
+- Electron
+- Tauri
+- WebKit/GTK wrapper
+
+*** Steps
+
+1. Decide which runtime to test first.
+2. Create a minimal wrapper around the built static site.
+3. Package that wrapper with Nix.
+4. Add desktop integration.
+5. Test Wayland/X11 behavior.
+6. Evaluate size, complexity, and maintainability.
+
+*** Why do this
+
+This best matches the idea of Monkeytype as a desktop application.
+
+*** Risk
+
+This adds a second packaging problem: not just Monkeytype, but also the runtime shell around it.
+
+** Option 5: Investigate upstream assumptions
+
+Goal: understand whether the current hacks can be replaced with cleaner solutions.
+
+*** Steps
+
+1. Read the Monkeytype build configuration.
+2. Understand how Firebase config is expected to be supplied.
+3. Understand whether reCAPTCHA is needed for local/static use.
+4. See whether upstream documents self-hosting.
+5. Decide whether to patch, configure, or document these assumptions.
+
+*** Why do this
+
+This is needed before considering a serious Nixpkgs submission.
+
+** Option 6: Treat the repo as a learning lab
+
+This may be the best framing for now.
+
+The repo can explore:
+
+- static-site package
+- local-server package
+- desktop-wrapper package
+
+Possible package names:
+
+#+begin_src text
+monkeytype-static
+monkeytype-server
+monkeytype-desktop
+#+end_src
+
+This avoids pretending there is one obvious final answer.
+
+* Source pinning
+
+The package now builds against a specific upstream commit rather than
+the moving `master` branch.
+
+This establishes a known-good baseline. Future updates to upstream
+become deliberate maintenance decisions rather than automatic changes.
+
+At this point the package became reproducible not only in terms of the
+build, but also in terms of the source revision it documents.
+
+
+* My Current Read
+
+** Right now, I think the best next direction is:
+
+1. Clean up and document the current build.
+2. Add a terminal launcher using a local server.
+3. Add a desktop file.
+4. Only then explore Electron/Tauri/WebKit.
+
+That path keeps each step small and testable.
+
+The desktop wrapper is still attractive, but I should not jump straight to it until the simpler runtime model is understood.
+
+
+* Things I still don't understand
+
+- Why is `--no-frozen-lockfile` necessary?
+- Is the dummy RECAPTCHA key appropriate for local use?
+- Is copying `firebase-config-example.ts` the correct approach, or is there a better upstream-supported mechanism?
+- What is the intended self-hosting workflow upstream?
