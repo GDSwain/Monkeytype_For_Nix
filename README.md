@@ -1,100 +1,164 @@
 # Monkeytype for Nix
 
-This repository packages the
-[Monkeytype](https://github.com/monkeytypegame/monkeytype)
-typing application for Nix while documenting the packaging process.
+*A practical exploration of software packaging with Nix.*
 
-All application code originates from the Monkeytype contributors.
-This repository contains the Nix packaging, launcher, documentation,
-and project notes.
+**Project status: Completed learning project — no longer maintained.**
 
-## About Monkeytype
+## Project Overview
 
-Monkeytype is an active open source project developed by its contributors.
+This repository documents an investigation into packaging [Monkeytype](https://github.com/monkeytypegame/monkeytype), an open-source typing application, using Nix.
 
-This repository does **not** modify Monkeytype itself.
-Instead, it focuses on packaging the existing project for Nix in a
-reproducible and well-documented manner.
+The objective was to understand how a modern TypeScript/pnpm application could be built and packaged reproducibly within the Nix ecosystem, without relying on flakes or Home Manager.
 
-## Current Status
+The project was undertaken as a learning exercise rather than an attempt to maintain or distribute an alternative version of Monkeytype.
 
-The package currently:
+All application code originates from the upstream Monkeytype contributors.
 
-- Fetches the upstream source from GitHub.
-- Fetches pnpm dependencies using Nix.
-- Builds reproducibly inside the Nix sandbox.
-- Produces the Monkeytype static site.
-- Installs a `monkeytype` launcher.
-- Automatically opens the default browser.
-- Serves the packaged site locally.
-- Detects port conflicts before launching.
-- Shuts down cleanly without leaving background processes.
+This repository contains the Nix packaging definitions, Python launcher, desktop integration files, and documentation produced during the investigation.
 
-Current limitations:
+## Project Objectives
 
-- No desktop launcher (`.desktop` file) is provided yet.
-- No dedicated desktop wrapper (Electron/Tauri/WebKit) exists.
-- Authentication is not currently supported.
-- The package has not been submitted to Nixpkgs.
+The exercise focused on understanding:
 
-## Current Goals
+- Nix derivations and package definitions.
+- Fetching and pinning upstream source code.
+- Managing pnpm dependencies within Nix.
+- Building software inside the Nix sandbox.
+- Producing reproducible build outputs.
+- Installing application files into the Nix store.
+- Creating a launcher for the packaged application.
+- Integrating an application with the Linux desktop.
+- Troubleshooting build and runtime behaviour.
 
-The current focus is desktop integration:
+The emphasis throughout was on understanding the packaging process and documenting the reasoning behind implementation decisions.
 
-- Add a `.desktop` launcher.
-- Install application icons.
-- Integrate with the freedesktop desktop environment.
-- Continue documenting packaging decisions.
+## Implementation
+
+The project uses a conventional Nix packaging structure.
+
+### Nix Packaging
+
+`package.nix` defines the package and its build process.
+
+`default.nix` provides the entry point for building the package using `nix-build`.
+
+The packaging process:
+
+- Fetches the upstream Monkeytype source.
+- Retrieves pnpm dependencies through Nix.
+- Builds the application within the Nix sandbox.
+- Produces the application's static website.
+- Installs the resulting files into the package output.
+
+The upstream source is pinned to a specific revision to support reproducible builds.
+
+### Python Launcher
+
+`monkeytype-launcher.py` provides the runtime launcher.
+
+Its responsibilities include:
+
+- Serving the packaged application locally.
+- Opening the application in the default browser.
+- Detecting port conflicts.
+- Providing runtime diagnostics.
+- Handling shutdown without leaving background processes.
+
+Keeping the launcher separate from the Nix packaging allowed the build process and runtime behaviour to be developed and understood independently.
+
+### Desktop Integration
+
+The repository includes `monkeytype.desktop` as part of the desktop integration work.
+
+The project explored how a locally packaged web application could be presented as a desktop application.
+
+A dedicated Electron, Tauri, or WebKit wrapper was not implemented.
 
 ## Building
 
+From the project directory:
+
 ```bash
 nix-build
-
 ```
 
-### Running
+This produces a `result` symlink pointing to the package in the Nix store.
+
+## Running
+
+Launch the packaged application with:
 
 ```bash
 ./result/bin/monkeytype
-
 ```
 
-## Milestones
+The Python launcher serves the packaged website locally and opens it in the default browser.
 
-Completed:
+The application uses:
 
-- Reproducible build from upstream source.
-- Source pinned to a specific upstream commit.
-- Documented derivation.
-- Install verification.
-- Dedicated Python launcher.
-- Automatic browser launch.
-- Friendly runtime diagnostics.
-- Runnable monkeytype command.
-- Why this repository?
+```text
+127.0.0.1:8765
+```
 
-After upgrading the package, an existing browser cache may retain assets from
-the previous frontend build. If styles fail to load, clear the site data for
-127.0.0.1:8765 and reload.
+If an existing browser cache retains assets from an earlier build, clearing the site's browser data may resolve display problems.
 
-This project began as a learning exercise to understand how a modern
-TypeScript/pnpm application can be packaged reproducibly using Nix,
-without relying on flakes or Home Manager.
+## Project Documentation
 
-Over time it evolved into a documented exploration of software packaging.
-The aim is not simply to produce a working package, but to understand
-why packaging decisions are made and to record that reasoning.
+`Monkeytype.org` contains the development notes and technical investigation.
 
-package.nix documents the packaging.
-Project.org records the engineering decisions.
-The launcher remains a separate component so that packaging and runtime
-behaviour each have a single responsibility.
+It records the packaging process, implementation decisions, problems encountered, and lessons learned.
 
-This repository is therefore as much about understanding Nix packaging
-as it is about packaging Monkeytype.
+The documentation is retained as part of the project's educational value.
 
-If you decide to use it, you're doing so with the understanding that it
-is an evolving packaging project rather than an official Monkeytype release.
+## Limitations
 
-— Oggie
+The packaging exercise successfully produced a working application.
+
+However, the project encountered stability and compatibility issues associated with the upstream application.
+
+These issues complicated continued maintenance and reduced the practical value of maintaining a separate package.
+
+Additional limitations include:
+
+- Authentication was not implemented.
+- No dedicated desktop application wrapper was developed.
+- The package was not submitted to Nixpkgs.
+- Ongoing compatibility with newer upstream releases is not maintained.
+
+This repository should not be considered a supported or current Monkeytype distribution.
+
+## Project Outcome
+
+**The project achieved its primary objective: developing a practical understanding of Nix software packaging.**
+
+The exercise demonstrated how an existing application could be fetched, built, packaged, installed, and launched using Nix.
+
+It also provided experience working with build dependencies, reproducibility, runtime integration, and troubleshooting.
+
+Although the resulting package worked, maintaining compatibility with the upstream application was outside the project's intended scope.
+
+The purpose was not to become a Monkeytype package maintainer, but to understand the mechanisms involved in packaging software for NixOS.
+
+By that measure, the project was successful.
+
+## Project Conclusion
+
+Development has concluded.
+
+Monkeytype for Nix remains available as a documented learning project demonstrating the packaging of a modern web application within the Nix ecosystem.
+
+The repository preserves the implementation and development notes as a record of the investigation.
+
+No further development or maintenance is planned.
+
+## Attribution
+
+Monkeytype is developed and maintained by its upstream contributors.
+
+This repository is an independent packaging experiment and is not affiliated with or endorsed by the Monkeytype project.
+
+The original application remains the work of its respective contributors.
+
+---
+
+*Oggie*
